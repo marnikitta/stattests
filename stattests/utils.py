@@ -1,5 +1,5 @@
 import pathlib
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Callable
 
 import numpy as np
 import scipy.stats
@@ -121,8 +121,8 @@ def frame_from_params(data_dir: str, param: Dict):
 
 def wpv(data_dir: str,
         codename: str,
-        ab_data: np.ndarray,
-        aa_data: np.ndarray,
+        ab_data_callback: Callable[[], np.ndarray],
+        aa_data_callback: Callable[[], np.ndarray],
         NN: int,
         N: int,
         uplift: float,
@@ -131,6 +131,11 @@ def wpv(data_dir: str,
         skew: float):
     filename = f'{data_dir}/NN={NN}/N={N}/uplift={uplift}/success_rate={success_rate}/beta={beta}/skew={skew}/{codename}'
     data_path = pathlib.Path(filename)
+    if data_path.exists():
+        return
+
+    ab_data = ab_data_callback()
+    aa_data = aa_data_callback()
     data_path.mkdir(parents=True, exist_ok=True)
 
     with (data_path / 'ab_data').open('w') as f:
@@ -172,34 +177,35 @@ def apply_all_tests(data_dir: str,
     (attempts_0_ab, successes_0_ab), (attempts_1_ab, successes_1_ab), gt_success_rates = generate_data(**ab_params)
     (attempts_0_aa, successes_0_aa), (attempts_1_aa, successes_1_aa), _ = generate_data(**aa_params)
 
-    wpv(data_dir, 'ttest_successes_count', t_test(successes_0_ab, successes_1_ab),
-        t_test(successes_0_aa, successes_1_aa),
+    wpv(data_dir, 'ttest_successes_count', lambda: t_test(successes_0_ab, successes_1_ab),
+        lambda: t_test(successes_0_aa, successes_1_aa),
         **ab_params)
-    wpv(data_dir, 'mannwhitney_successes_count', mannwhitney(successes_0_ab, successes_1_ab),
-        mannwhitney(successes_0_aa, successes_1_aa), **ab_params)
+    wpv(data_dir, 'mannwhitney_successes_count', lambda: mannwhitney(successes_0_ab, successes_1_ab),
+        lambda: mannwhitney(successes_0_aa, successes_1_aa), **ab_params)
 
-    wpv(data_dir, 'delta', delta_method_ctrs(successes_0_ab, attempts_0_ab, successes_1_ab, attempts_1_ab),
-        delta_method_ctrs(successes_0_aa, attempts_0_aa, successes_1_aa, attempts_1_aa), **ab_params)
+    wpv(data_dir, 'delta', lambda: delta_method_ctrs(successes_0_ab, attempts_0_ab, successes_1_ab, attempts_1_ab),
+        lambda: delta_method_ctrs(successes_0_aa, attempts_0_aa, successes_1_aa, attempts_1_aa), **ab_params)
 
     wpv(data_dir, 'bootstrap',
-        bootstrap(successes_0_ab / attempts_0_ab, attempts_0_ab, successes_1_ab / attempts_1_ab, attempts_1_ab),
-        bootstrap(successes_0_aa / attempts_0_aa, attempts_0_aa, successes_1_aa / attempts_1_aa, attempts_1_aa),
+        lambda: bootstrap(successes_0_ab / attempts_0_ab, attempts_0_ab, successes_1_ab / attempts_1_ab, attempts_1_ab),
+        lambda: bootstrap(successes_0_aa / attempts_0_aa, attempts_0_aa, successes_1_aa / attempts_1_aa, attempts_1_aa),
         **ab_params)
 
     linearized_0_ab, linearized_1_ab = linearization_of_successes(successes_0_ab, attempts_0_ab, successes_1_ab,
                                                                   attempts_1_ab)
     linearized_0_aa, linearized_1_aa = linearization_of_successes(successes_0_aa, attempts_0_aa, successes_1_aa,
                                                                   attempts_1_aa)
-    wpv(data_dir, 'linearization', t_test(linearized_0_ab, linearized_1_ab), t_test(linearized_0_aa, linearized_1_aa),
+    wpv(data_dir, 'linearization', lambda: t_test(linearized_0_ab, linearized_1_ab),
+        lambda: t_test(linearized_0_aa, linearized_1_aa),
         **ab_params)
 
-    wpv(data_dir, 'buckets', buckets(successes_0_ab / attempts_0_ab, np.ones(shape=attempts_0_ab.shape),
-                                     successes_1_ab / attempts_1_ab, np.ones(shape=attempts_1_ab.shape)),
-        buckets(successes_0_aa / attempts_0_aa, np.ones(shape=attempts_0_aa.shape),
-                successes_1_aa / attempts_1_aa, np.ones(shape=attempts_1_aa.shape)), **ab_params)
+    wpv(data_dir, 'buckets', lambda: buckets(successes_0_ab / attempts_0_ab, np.ones(shape=attempts_0_ab.shape),
+                                             successes_1_ab / attempts_1_ab, np.ones(shape=attempts_1_ab.shape)),
+        lambda: buckets(successes_0_aa / attempts_0_aa, np.ones(shape=attempts_0_aa.shape),
+                        successes_1_aa / attempts_1_aa, np.ones(shape=attempts_1_aa.shape)), **ab_params)
 
-    wpv(data_dir, 't_test_ctrs', t_test(successes_0_ab / attempts_0_ab, successes_1_ab / attempts_1_ab),
-        t_test(successes_0_aa / attempts_0_aa, successes_1_aa / attempts_1_aa), **ab_params)
+    wpv(data_dir, 't_test_ctrs', lambda: t_test(successes_0_ab / attempts_0_ab, successes_1_ab / attempts_1_ab),
+        lambda: t_test(successes_0_aa / attempts_0_aa, successes_1_aa / attempts_1_aa), **ab_params)
 
     corr_aware_w_0_ab, corr_aware_w_1_ab = intra_user_correlation_aware_weights(successes_0_ab, attempts_0_ab,
                                                                                 attempts_1_ab)
@@ -207,55 +213,61 @@ def apply_all_tests(data_dir: str,
                                                                                 attempts_1_aa)
 
     wpv(data_dir, 'weighted_bootstrap',
-        bootstrap(successes_0_ab / attempts_0_ab, corr_aware_w_0_ab, successes_1_ab / attempts_1_ab, corr_aware_w_1_ab),
-        bootstrap(successes_0_aa / attempts_0_aa, corr_aware_w_0_aa, successes_1_aa / attempts_1_aa, corr_aware_w_1_aa),
+        lambda: bootstrap(successes_0_ab / attempts_0_ab, corr_aware_w_0_ab, successes_1_ab / attempts_1_ab,
+                          corr_aware_w_1_ab),
+        lambda: bootstrap(successes_0_aa / attempts_0_aa, corr_aware_w_0_aa, successes_1_aa / attempts_1_aa,
+                          corr_aware_w_1_aa),
         **ab_params)
 
     wpv(data_dir, 'weighted_linearization',
-        t_test(linearized_0_ab * corr_aware_w_0_ab, linearized_1_ab * corr_aware_w_1_ab),
-        t_test(linearized_0_aa * corr_aware_w_0_aa, linearized_1_aa * corr_aware_w_1_aa), **ab_params)
+        lambda: t_test(linearized_0_ab * corr_aware_w_0_ab, linearized_1_ab * corr_aware_w_1_ab),
+        lambda: t_test(linearized_0_aa * corr_aware_w_0_aa, linearized_1_aa * corr_aware_w_1_aa), **ab_params)
 
     wpv(data_dir, 'weighted_t_test_ctrs',
-        t_test(successes_0_ab / attempts_0_ab * corr_aware_w_0_ab, successes_1_ab / attempts_1_ab * corr_aware_w_1_ab),
-        t_test(successes_0_aa / attempts_0_aa * corr_aware_w_0_aa, successes_1_aa / attempts_1_aa * corr_aware_w_1_aa),
+        lambda: t_test(successes_0_ab / attempts_0_ab * corr_aware_w_0_ab,
+                       successes_1_ab / attempts_1_ab * corr_aware_w_1_ab),
+        lambda: t_test(successes_0_aa / attempts_0_aa * corr_aware_w_0_aa,
+                       successes_1_aa / attempts_1_aa * corr_aware_w_1_aa),
         **ab_params)
 
     wpv(data_dir, 'weighted_buckets',
-        buckets(successes_0_ab / attempts_0_ab, corr_aware_w_0_ab, successes_1_ab / attempts_1_ab, corr_aware_w_1_ab),
-        buckets(successes_0_aa / attempts_0_aa, corr_aware_w_0_aa, successes_1_aa / attempts_1_aa, corr_aware_w_1_aa),
+        lambda: buckets(successes_0_ab / attempts_0_ab, corr_aware_w_0_ab, successes_1_ab / attempts_1_ab,
+                        corr_aware_w_1_ab),
+        lambda: buckets(successes_0_aa / attempts_0_aa, corr_aware_w_0_aa, successes_1_aa / attempts_1_aa,
+                        corr_aware_w_1_aa),
         **ab_params)
 
     wpv(data_dir, 'weighted_sqr_bootstrap',
-        bootstrap(successes_0_ab / attempts_0_ab, np.sqrt(attempts_0_ab), successes_1_ab / attempts_1_ab,
-                  np.sqrt(attempts_1_ab)),
-        bootstrap(successes_0_aa / attempts_0_aa, np.sqrt(attempts_0_aa), successes_1_aa / attempts_1_aa,
-                  np.sqrt(attempts_1_aa)),
+        lambda: bootstrap(successes_0_ab / attempts_0_ab, np.sqrt(attempts_0_ab), successes_1_ab / attempts_1_ab,
+                          np.sqrt(attempts_1_ab)),
+        lambda: bootstrap(successes_0_aa / attempts_0_aa, np.sqrt(attempts_0_aa), successes_1_aa / attempts_1_aa,
+                          np.sqrt(attempts_1_aa)),
         **ab_params)
 
     wpv(data_dir, 'weighted_sqr_linearization',
-        t_test(linearized_0_ab * np.sqrt(attempts_0_ab), linearized_1_ab * np.sqrt(attempts_1_ab)),
-        t_test(linearized_0_aa * np.sqrt(attempts_0_aa), linearized_1_aa * np.sqrt(attempts_1_aa)),
+        lambda: t_test(linearized_0_ab * np.sqrt(attempts_0_ab), linearized_1_ab * np.sqrt(attempts_1_ab)),
+        lambda: t_test(linearized_0_aa * np.sqrt(attempts_0_aa), linearized_1_aa * np.sqrt(attempts_1_aa)),
         **ab_params)
 
     wpv(data_dir, 'weighted_sqr_t_test_ctrs',
-        t_test(successes_0_ab / attempts_0_ab * np.sqrt(attempts_0_ab),
-               successes_1_ab / attempts_1_ab * np.sqrt(attempts_1_ab)),
-        t_test(successes_0_aa / attempts_0_aa * np.sqrt(attempts_0_aa),
-               successes_1_aa / attempts_1_aa * np.sqrt(attempts_1_aa)),
+        lambda: t_test(successes_0_ab / attempts_0_ab * np.sqrt(attempts_0_ab),
+                       successes_1_ab / attempts_1_ab * np.sqrt(attempts_1_ab)),
+        lambda: t_test(successes_0_aa / attempts_0_aa * np.sqrt(attempts_0_aa),
+                       successes_1_aa / attempts_1_aa * np.sqrt(attempts_1_aa)),
         **ab_params)
 
     wpv(data_dir, 'weighted_sqr_buckets',
-        buckets(successes_0_ab / attempts_0_ab, np.sqrt(attempts_0_ab), successes_1_ab / attempts_1_ab,
-                np.sqrt(attempts_1_ab)),
-        buckets(successes_0_aa / attempts_0_aa, np.sqrt(attempts_0_aa), successes_1_aa / attempts_1_aa,
-                np.sqrt(attempts_1_aa)),
+        lambda: buckets(successes_0_ab / attempts_0_ab, np.sqrt(attempts_0_ab), successes_1_ab / attempts_1_ab,
+                        np.sqrt(attempts_1_ab)),
+        lambda: buckets(successes_0_aa / attempts_0_aa, np.sqrt(attempts_0_aa), successes_1_aa / attempts_1_aa,
+                        np.sqrt(attempts_1_aa)),
         **ab_params)
 
     wpv(data_dir, 'weighted_sqr_buckets',
-        buckets(successes_0_ab / attempts_0_ab, np.sqrt(attempts_0_ab), successes_1_ab / attempts_1_ab,
-                np.sqrt(attempts_1_ab)),
-        buckets(successes_0_aa / attempts_0_aa, np.sqrt(attempts_0_aa), successes_1_aa / attempts_1_aa,
-                np.sqrt(attempts_1_aa)),
+        lambda: buckets(successes_0_ab / attempts_0_ab, np.sqrt(attempts_0_ab), successes_1_ab / attempts_1_ab,
+                        np.sqrt(attempts_1_ab)),
+        lambda: buckets(successes_0_aa / attempts_0_aa, np.sqrt(attempts_0_aa), successes_1_aa / attempts_1_aa,
+                        np.sqrt(attempts_1_aa)),
         **ab_params)
 
     smoothed_ctrs_0_ab, smoothed_ctrs_1_ab = get_smoothed_ctrs(successes_0_ab, attempts_0_ab,
@@ -263,6 +275,6 @@ def apply_all_tests(data_dir: str,
     smoothed_ctrs_0_aa, smoothed_ctrs_1_aa = get_smoothed_ctrs(successes_0_aa, attempts_0_aa,
                                                                successes_1_aa, attempts_1_aa)
     wpv(data_dir, 'ttest_smoothed',
-        t_test(smoothed_ctrs_0_ab, smoothed_ctrs_1_ab),
-        t_test(smoothed_ctrs_0_aa, smoothed_ctrs_1_aa),
+        lambda: t_test(smoothed_ctrs_0_ab, smoothed_ctrs_1_ab),
+        lambda: t_test(smoothed_ctrs_0_aa, smoothed_ctrs_1_aa),
         **ab_params)
