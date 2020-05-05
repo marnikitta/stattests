@@ -11,5 +11,5 @@ if __name__ == '__main__':
     skew_start, skew_end = 1, 10
     points = 20
 
-    for skew in np.linspace(skew_start, skew_end):
+    for skew in np.linspace(skew_start, skew_end, points):
         apply_all_tests('./data', NN, N, uplift, success_rate, beta, skew)
