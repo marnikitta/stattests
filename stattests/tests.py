@@ -103,7 +103,8 @@ def proportions_diff_z_test(success_rate_0, attempts_0, success_rate_1, attempts
     :return: np.array shape (n_experiments), two-sided p-values of delta-method on CTRs in all the experimetns
     """
     overall_ctrs = (success_rate_0 * attempts_0 + success_rate_1 * attempts_1) / (attempts_0 + attempts_1)
-    z_stats = (success_rate_0 - success_rate_1) / np.sqrt(overall_ctrs * (1 - overall_ctrs) * (1. / attempts_0 + 1. / attempts_1))
+    z_stats = (success_rate_0 - success_rate_1) / np.sqrt(
+        overall_ctrs * (1 - overall_ctrs) * (1. / attempts_0 + 1. / attempts_1))
     return 2 * np.minimum(scipy.stats.norm(0, 1).cdf(z_stats), 1 - scipy.stats.norm(0, 1).cdf(z_stats))
 
 
@@ -124,8 +125,10 @@ def delta_method_ctrs(successes_0, attempts_0, successes_1, attempts_1):
     mean_attempts_0, var_attempts_0 = np.mean(attempts_0, axis=1), np.var(attempts_0, axis=1)
     mean_attempts_1, var_attempts_1 = np.mean(attempts_1, axis=1), np.var(attempts_1, axis=1)
 
-    cov_0 = np.mean((successes_0 - mean_successes_0.reshape(-1, 1)) * (attempts_0 - mean_attempts_0.reshape(-1, 1)), axis=1)
-    cov_1 = np.mean((successes_1 - mean_successes_1.reshape(-1, 1)) * (attempts_1 - mean_attempts_1.reshape(-1, 1)), axis=1)
+    cov_0 = np.mean((successes_0 - mean_successes_0.reshape(-1, 1)) * (attempts_0 - mean_attempts_0.reshape(-1, 1)),
+                    axis=1)
+    cov_1 = np.mean((successes_1 - mean_successes_1.reshape(-1, 1)) * (attempts_1 - mean_attempts_1.reshape(-1, 1)),
+                    axis=1)
 
     var_0 = var_successes_0 / mean_attempts_0 ** 2 + var_attempts_0 * mean_successes_0 ** 2 / mean_attempts_0 ** 4 - 2 * mean_successes_0 / mean_attempts_0 ** 3 * cov_0
     var_1 = var_successes_1 / mean_attempts_1 ** 2 + var_attempts_1 * mean_successes_1 ** 2 / mean_attempts_1 ** 4 - 2 * mean_successes_1 / mean_attempts_1 ** 3 * cov_1
@@ -159,6 +162,7 @@ def intra_user_correlation_aware_weights(successes_0, attempts_0, attempts_1):
     w_0 = attempts_0 / (1 + (attempts_0 - 1) * rho)
     w_1 = attempts_1 / (1 + (attempts_1 - 1) * rho)
     return w_0, w_1
+
 
 def linearization_of_successes(successes_0, attempts_0, successes_1, attempts_1):
     """
