@@ -10,21 +10,22 @@ from stattests.tests import t_test, mannwhitney, delta_method_ctrs, linearizatio
     intra_user_correlation_aware_weights, get_smoothed_ctrs
 
 title2codenames = {'T-test, successes count': ('ttest_successes_count', 'r--'),
-                  'Mann-Whitney test, successes count': ('mannwhitney_successes_count', 'b--'),
-                  'Delta-method, global CTR': ('delta', 'g--'),
-                  'Bootstrap, global CTR': ('bootstrap', 'k--'),
-                  'Linearization of successes': ('linearization', 'm--'),
-                  'Bucketization, bucket CTR': ('buckets', 'c--'),
-                  'T-test, user-CTR': ('t_test_ctrs', 'y--'),
-                  'Weighted bootstrap': ('weighted_bootstrap', 'k:'),
-                  'Weighted linearization': ('weighted_linearization', 'm:'),
-                  'Weighted bucketization': ('weighted_buckets', 'c:'),
-                  'Weighted t-test CTRs': ('weighted_t_test_ctrs', 'y:'),
-                  'Weighted sqr bootstrap': ('weighted_sqr_bootstrap', 'k-.'),
-                  'Weighted sqr linearization': ('weighted_sqr_linearization', 'm-.'),
-                  'Weighted sqr bucketization': ('weighted_sqr_buckets', 'c-.'),
-                  'Weighted sqr t-test CTRs': ('weighted_sqr_t_test_ctrs', 'y-.'),
-                  'T-test, smoothed CTRs': ('ttest_smoothed', 'r-.')}
+                   'Mann-Whitney test, successes count': ('mannwhitney_successes_count', 'b--'),
+                   'Delta-method, global CTR': ('delta', 'g--'),
+                   'Bootstrap, global CTR': ('bootstrap', 'k--'),
+                   'Linearization of successes': ('linearization', 'm--'),
+                   'Bucketization, bucket CTR': ('buckets', 'c--'),
+                   'T-test, user-CTR': ('t_test_ctrs', 'y--'),
+                   'Weighted bootstrap': ('weighted_bootstrap', 'k:'),
+                   'Weighted linearization': ('weighted_linearization', 'm:'),
+                   'Weighted bucketization': ('weighted_buckets', 'c:'),
+                   'Weighted t-test CTRs': ('weighted_t_test_ctrs', 'y:'),
+                   'Weighted sqr bootstrap': ('weighted_sqr_bootstrap', 'k-.'),
+                   'Weighted sqr linearization': ('weighted_sqr_linearization', 'm-.'),
+                   'Weighted sqr bucketization': ('weighted_sqr_buckets', 'c-.'),
+                   'Weighted sqr t-test CTRs': ('weighted_sqr_t_test_ctrs', 'y-.'),
+                   'T-test, smoothed CTRs': ('ttest_smoothed', 'r-.')}
+
 
 def plot_cdf(data, label, ax, linetype):
     sorted_data = np.sort(data)
@@ -34,53 +35,88 @@ def plot_cdf(data, label, ax, linetype):
     sorted_data = np.hstack((sorted_data, 1))
     cdf = np.hstack((cdf, 1))
 
-    ax.plot(sorted_data, cdf, linetype, label=label, linewidth=1.5)
+    return ax.plot(sorted_data, cdf, linetype, label=label, linewidth=1.5)
 
 
-def plot_summary(dict_to_plot: Dict[str, Tuple[np.ndarray, np.ndarray, str]],
+def plot_summary(dict2plot: Dict[str, Tuple[np.ndarray, np.ndarray, str]],
                  attempts_0: np.ndarray,
-                 ground_truth_success_rates: np.ndarray):
+                 ground_truth_success_rates: np.ndarray, fix_axis: bool = True):
     """
-    
-    :param dict_to_plot_ab: dict[str, (np.array, str)]
+    :param dict2plot: dict[str, (np.array, str)]
     :param ground_truth_success_rates: np.array
     :param attempts_0: np.array
     :return: 
     """
-    fig, (ax_h1, ax_h0, ax_powers, ax_attempts, ax_successes) = plt.subplots(5, 1, figsize=(16, 23))
+    fig, ((ax_h1, ax_legend, ax_h0), (ax_powers, ax_attempts, ax_successes)) = plt.subplots(2, 3, figsize=(20, 10),
+                                                                                            dpi=200)
+
+    fig.subplots_adjust(wspace=0.2, hspace=0.3)
+    # fig.set_tight_layout(True)
+
+    ax_h1.plot(np.linspace(0, 1, 10000), np.linspace(0, 1, 10000), 'k', alpha=0.1)
+    ax_h0.plot(np.linspace(0, 1, 10000), np.linspace(0, 1, 10000), 'k', alpha=0.1)
+
+    ax_h1.set_xlabel('p-value')
+    ax_h0.set_xlabel('p-value')
+    ax_h1.set_title('Simulated p-value CDFs under H1')
+    ax_h0.set_title('Simulated p-value CDFs under H0')
+
+    ax_h1.axvline(0.05, color='k', alpha=0.5)
+
+    lines = []
+
+    for title, (ab_pvals, aa_pvals, linetype) in dict2plot.items():
+        line, = plot_cdf(ab_pvals, title, ax_h1, linetype)
+        plot_cdf(aa_pvals, title, ax_h0, linetype)
+        lines.append(line)
+    ax_legend.legend(handles=lines, loc='center')
+    ax_legend.axis('off')
+
+    ax_powers.set_title('Test Power')
     tests_powers = []
     tests_labels = []
     tests_colours = []
-    for n, (ab_pvals, aa_pvals, linetype) in dict_to_plot.items():
-        plot_cdf(ab_pvals, n, ax_h1, linetype)
-        tests_powers.append(np.mean(ab_pvals < 0.05))
-        tests_labels.append(n)
+    for title, (ab_pvals, _, linetype) in dict2plot.items():
+        tests_labels.append(title)
         tests_colours.append(linetype[:1])
-    ax_h1.plot(np.linspace(0, 1, 10000), np.linspace(0, 1, 10000), 'k', alpha=0.1)
-    ax_h1.set_xlabel('p-value')
-    ax_h1.axvline(0.05, color='k', alpha=0.5)
-    ax_h1.set_title('Simulated p-value CDFs under H1')
-    ax_h1.legend(loc='upper right')
-    ind = list(range(len(tests_powers)))  # np.argsort(tests_powers)
-    ax_powers.set_title('Test Power')
-    ax_powers.barh(np.array(tests_labels)[ind], np.array(tests_powers)[ind], color=np.array(tests_colours)[ind])
+        tests_powers.append(np.mean(ab_pvals < 0.05))
+    ax_powers.barh(np.array(tests_labels), np.array(tests_powers), color=np.array(tests_colours))
 
-    for n, (ab_pvals, aa_pvals, linetype) in dict_to_plot.items():
-        plot_cdf(aa_pvals, n, ax_h0, linetype)
-    ax_h0.plot(np.linspace(0, 1, 10000), np.linspace(0, 1, 10000), 'k', alpha=0.1)
-    ax_h0.set_xlabel('p-value')
-    ax_h0.set_title('Simulated p-value CDFs under H0')
-    ax_h0.legend(loc='upper right')
-
-    # take only one experiment for plotting
     ax_attempts.hist(attempts_0[:10].flatten(), 100, (0, 100), density=True)
-    attempts_std = attempts_0[:10].flatten().std()
-    ax_attempts.set_title('Attempts (views) distribution, std = {:.3f}'.format(attempts_std))
+    attempts_std = np.std(attempts_0[:10].flatten())
+    ax_attempts.set_title('Attempts (views) distribution, std = {:<20.0f}'.format(attempts_std))
 
-    ax_successes.hist(ground_truth_success_rates[:10].flatten(), bins=100)
+    if fix_axis:
+        ax_successes.hist(ground_truth_success_rates[:10].flatten(), 100, (0, 0.5), density=True)
+    else:
+        ax_successes.hist(ground_truth_success_rates[:10].flatten(), bins=100, density=True)
+
     success_rate_std = ground_truth_success_rates[:10].flatten().std()
-    ax_successes.set_title('user-CTR, std = {:.3f}'.format(success_rate_std))
+    ax_successes.set_title('user-CTR, std = {:2.3f}'.format(success_rate_std))
     return fig
+
+
+def plot_from_params(data_dir: str, params: Dict):
+    gen_params = dict(params)
+    gen_params['NN'] = 10
+    (attempts_0, _), _, ground_truth_success_rates = generate_data(**gen_params)
+
+    dict2plot = {}
+    for title, (codename, linetype) in title2codenames.items():
+        ab_data, aa_data = rpv(data_dir, codename, **params)
+        dict2plot[title] = (ab_data, aa_data, linetype)
+
+    fig = plot_summary(dict2plot, attempts_0, ground_truth_success_rates)
+    return fig
+
+
+def frame_from_params(data_dir: str, param: Dict):
+    fig = plot_from_params(data_dir, param)
+    fig.canvas.draw()  # draw the canvas, cache the renderer
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    plt.close(fig)
+    return image
 
 
 def wpv(data_dir: str,
