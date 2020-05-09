@@ -1,5 +1,5 @@
 import pathlib
-from typing import Tuple, Dict, Callable
+from typing import Tuple, Dict, Callable, Optional, Set
 
 import numpy as np
 import scipy.stats
@@ -9,22 +9,22 @@ from stattests.generation import generate_data
 from stattests.tests import t_test, mannwhitney, delta_method_ctrs, linearization_of_successes, bootstrap, buckets, \
     intra_user_correlation_aware_weights, get_smoothed_ctrs
 
-title2codenames = {'T-test, successes count': ('ttest_successes_count', 'r--'),
-                   'Mann-Whitney test, successes count': ('mannwhitney_successes_count', 'b--'),
-                   'Delta-method, global CTR': ('delta', 'g--'),
-                   'Bootstrap, global CTR': ('bootstrap', 'k--'),
-                   'Linearization of successes': ('linearization', 'm--'),
-                   'Bucketization, bucket CTR': ('buckets', 'c--'),
-                   'T-test, user-CTR': ('t_test_ctrs', 'y--'),
-                   'Weighted bootstrap': ('weighted_bootstrap', 'k:'),
-                   'Weighted linearization': ('weighted_linearization', 'm:'),
-                   'Weighted bucketization': ('weighted_buckets', 'c:'),
-                   'Weighted t-test CTRs': ('weighted_t_test_ctrs', 'y:'),
-                   'Weighted sqr bootstrap': ('weighted_sqr_bootstrap', 'k-.'),
-                   'Weighted sqr linearization': ('weighted_sqr_linearization', 'm-.'),
-                   'Weighted sqr bucketization': ('weighted_sqr_buckets', 'c-.'),
-                   'Weighted sqr t-test CTRs': ('weighted_sqr_t_test_ctrs', 'y-.'),
-                   'T-test, smoothed CTRs': ('ttest_smoothed', 'r-.')}
+codenames2titles = {'ttest_successes_count': ('T-test, successes count', 'r--'),
+                    'mannwhitney_successes_count': ('Mann-Whitney test, successes count', 'b--'),
+                    'delta': ('Delta-method, global CTR', 'g--'),
+                    'bootstrap': ('Bootstrap, global CTR', 'k--'),
+                    'linearization': ('Linearization of successes', 'm--'),
+                    'buckets': ('Bucketization, bucket CTR', 'c--'),
+                    't_test_ctrs': ('T-test, user-CTR', 'y--'),
+                    'weighted_bootstrap': ('Weighted bootstrap', 'k:'),
+                    'weighted_linearization': ('Weighted linearization', 'm:'),
+                    'weighted_buckets': ('Weighted bucketization', 'c:'),
+                    'weighted_t_test_ctrs': ('Weighted t-test CTRs', 'y:'),
+                    'weighted_sqr_bootstrap': ('Weighted sqr bootstrap', 'k-.'),
+                    'weighted_sqr_linearization': ('Weighted sqr linearization', 'm-.'),
+                    'weighted_sqr_buckets': ('Weighted sqr bucketization', 'c-.'),
+                    'weighted_sqr_t_test_ctrs': ('Weighted sqr t-test CTRs', 'y-.'),
+                    'ttest_smoothed': ('T-test, smoothed CTRs', 'r-.')}
 
 
 def plot_cdf(data, label, ax, linetype):
@@ -96,13 +96,21 @@ def plot_summary(dict2plot: Dict[str, Tuple[np.ndarray, np.ndarray, str]],
     return fig
 
 
-def plot_from_params(data_dir: str, params: Dict):
+def plot_from_params(data_dir: str, params: Dict, codenames: Optional[Set[str]] = None):
     gen_params = dict(params)
     gen_params['NN'] = 10
     (attempts_0, _), _, ground_truth_success_rates = generate_data(**gen_params)
 
+    required_codenames2titles = {}
+    if codenames is not None:
+        for k, v in codenames2titles.items():
+            if k in codenames:
+                required_codenames2titles[k] = v
+    else:
+        required_codenames2titles.update(codenames2titles)
+
     dict2plot = {}
-    for title, (codename, linetype) in title2codenames.items():
+    for codename, (title, linetype) in required_codenames2titles.items():
         ab_data, aa_data = rpv(data_dir, codename, **params)
         dict2plot[title] = (ab_data, aa_data, linetype)
 
@@ -110,8 +118,8 @@ def plot_from_params(data_dir: str, params: Dict):
     return fig
 
 
-def frame_from_params(data_dir: str, param: Dict):
-    fig = plot_from_params(data_dir, param)
+def frame_from_params(data_dir: str, param: Dict, codenames: Optional[Set[str]] = None):
+    fig = plot_from_params(data_dir, param, codenames)
     fig.canvas.draw()  # draw the canvas, cache the renderer
     image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
     image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
