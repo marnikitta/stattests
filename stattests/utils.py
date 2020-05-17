@@ -9,22 +9,22 @@ from stattests.generation import generate_data
 from stattests.tests import t_test, mannwhitney, delta_method_ctrs, linearization_of_successes, bootstrap, buckets, \
     intra_user_correlation_aware_weights, get_smoothed_ctrs
 
-codenames2titles = {'ttest_successes_count': ('T-test, successes count', 'r--'),
-                    'mannwhitney_successes_count': ('Mann-Whitney test, successes count', 'b--'),
+codenames2titles = {'ttest_successes_count': ('T-test, clicks count', 'r--'),
+                    'mannwhitney_successes_count': ('Mann-Whitney test, clicks count', 'b--'),
                     'delta': ('Delta-method, global CTR', 'g--'),
                     'bootstrap': ('Bootstrap, global CTR', 'k--'),
-                    'linearization': ('Linearization of successes', 'm--'),
-                    'buckets': ('Bucketization, bucket CTR', 'c--'),
-                    't_test_ctrs': ('T-test, user-CTR', 'y--'),
-                    'weighted_bootstrap': ('Weighted bootstrap', 'k:'),
-                    'weighted_linearization': ('Weighted linearization', 'm:'),
-                    'weighted_buckets': ('Weighted bucketization', 'c:'),
-                    'weighted_t_test_ctrs': ('Weighted t-test CTRs', 'y:'),
-                    'weighted_sqr_bootstrap': ('Weighted sqr bootstrap', 'k-.'),
-                    'weighted_sqr_linearization': ('Weighted sqr linearization', 'm-.'),
-                    'weighted_sqr_buckets': ('Weighted sqr bucketization', 'c-.'),
-                    'weighted_sqr_t_test_ctrs': ('Weighted sqr t-test CTRs', 'y-.'),
-                    'ttest_smoothed': ('T-test, smoothed CTRs', 'r-.')}
+                    'linearization': ('Linearization, clicks count', 'm--'),
+                    'buckets': ('Bucketization, global CTR', 'c--'),
+                    't_test_ctrs': ('T-test, user CTR', 'y--'),
+                    'weighted_bootstrap': ('Weighted bootstrap, global CTR', 'k:'),
+                    'weighted_linearization': ('Weighted linearization, global CTR', 'm:'),
+                    'weighted_buckets': ('Weighted bucketization, global CTR', 'c:'),
+                    'weighted_t_test_ctrs': ('Weighted t-test, user CTR', 'y:'),
+                    'weighted_sqr_bootstrap': ('Weighted sqr bootstrap, global CTR', 'k-.'),
+                    'weighted_sqr_linearization': ('Weighted sqr linearization, global CTR', 'm-.'),
+                    'weighted_sqr_buckets': ('Weighted sqr bucketization, global CTR', 'c-.'),
+                    'weighted_sqr_t_test_ctrs': ('Weighted sqr t-test, user CTR', 'y-.'),
+                    'ttest_smoothed': ('T-testx smoothed user CTR', 'r-.')}
 
 
 def plot_cdf(data, label, ax, linetype):
@@ -84,7 +84,7 @@ def plot_summary(dict2plot: Dict[str, Tuple[np.ndarray, np.ndarray, str]],
 
     ax_attempts.hist(attempts_0[:10].flatten(), 100, (0, 100), density=True)
     attempts_std = np.std(attempts_0[:10].flatten())
-    ax_attempts.set_title('Attempts (views) distribution, std = {:<20.0f}'.format(attempts_std))
+    ax_attempts.set_title('Views distribution, std = {:<20.0f}'.format(attempts_std))
 
     if fix_axis:
         ax_successes.hist(ground_truth_success_rates[:10].flatten(), 100, (0, 0.5), density=True)
@@ -92,7 +92,7 @@ def plot_summary(dict2plot: Dict[str, Tuple[np.ndarray, np.ndarray, str]],
         ax_successes.hist(ground_truth_success_rates[:10].flatten(), bins=100, density=True)
 
     success_rate_std = ground_truth_success_rates[:10].flatten().std()
-    ax_successes.set_title('user-CTR, std = {:2.3f}'.format(success_rate_std))
+    ax_successes.set_title('Ground truth user CTR, std = {:2.3f}'.format(success_rate_std))
     return fig
 
 
