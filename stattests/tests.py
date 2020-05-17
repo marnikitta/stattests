@@ -69,7 +69,7 @@ def bootstrap(ctrs_0, weights_0, ctrs_1, weights_1, n_bootstrap=2000):
     return 2 * np.minimum(positions, n_bootstrap - positions) / n_bootstrap
 
 
-def buckets(ctrs_0, weights_0, ctrs_1, weights_1, n_buckets=50):
+def buckets(ctrs_0, weights_0, ctrs_1, weights_1, n_buckets=200):
     """
     Does weighted bucketization and calculates p-values for all experiments using t_test
     :param ctrs_0: np.array shape (n_experiments, n_users), CTRs of every user from control group in every experiment

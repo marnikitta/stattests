@@ -23,6 +23,7 @@ def wpv(data_dir: str,
     if data_path.exists():
         return
 
+    print(f'Running test for {codename}')
     ab_data = ab_data_callback()
     aa_data = aa_data_callback()
     data_path.mkdir(parents=True, exist_ok=True)
@@ -92,6 +93,11 @@ def apply_all_tests(data_dir: str,
                                              successes_1_ab / attempts_1_ab, np.ones(shape=attempts_1_ab.shape)),
         lambda: buckets(successes_0_aa / attempts_0_aa, np.ones(shape=attempts_0_aa.shape),
                         successes_1_aa / attempts_1_aa, np.ones(shape=attempts_1_aa.shape)), **ab_params)
+
+    wpv(data_dir, 'buckets_ctrs', lambda: buckets(successes_0_ab / attempts_0_ab, attempts_0_ab,
+                                             successes_1_ab / attempts_1_ab, attempts_1_ab),
+        lambda: buckets(successes_0_aa / attempts_0_aa, attempts_0_aa,
+                        successes_1_aa / attempts_1_aa, attempts_0_aa), **ab_params)
 
     wpv(data_dir, 't_test_ctrs', lambda: t_test(successes_0_ab / attempts_0_ab, successes_1_ab / attempts_1_ab),
         lambda: t_test(successes_0_aa / attempts_0_aa, successes_1_aa / attempts_1_aa), **ab_params)
