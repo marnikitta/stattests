@@ -23,7 +23,6 @@ def wpv(data_dir: str,
     if data_path.exists():
         return
 
-    print(f'Running test for {codename}')
     ab_data = ab_data_callback()
     aa_data = aa_data_callback()
     data_path.mkdir(parents=True, exist_ok=True)
