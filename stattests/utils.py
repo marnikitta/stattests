@@ -6,29 +6,31 @@ import scipy.stats
 import seaborn as sns
 from IPython.core.display import HTML
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 
 from stattests.data import rpv
 from stattests.generation import generate_data
 
-colors = sns.color_palette("bright")
+colors = sns.color_palette("deep")
 
 codenames2titles = {
-    'ttest_successes_count': ('T-test, clicks', colors[0], 'solid'),
-    'mannwhitney_successes_count': ('Mann-Whitney test, clicks', colors[1], 'solid'),
-    'delta': ('Delta-method, global CTR', colors[2], 'dashed'),
-    'bootstrap': ('Bootstrap, global CTR', colors[3], 'dashed'),
-    'linearization': ('Linearization, clicks', colors[4], 'solid'),
-    'buckets_ctrs': ('Bucketization, global CTR', colors[5], 'dashed'),
-    't_test_ctrs': ('T-test, user CTR', colors[6], 'dashed'),
-    'weighted_bootstrap': ('Weighted bootstrap, global CTR', colors[7], 'solid'),
-    'weighted_linearization': ('Weighted linearization, global CTR', colors[4], 'dotted'),
-    'weighted_buckets': ('Weighted bucketization, global CTR', colors[5], 'dotted'),
-    'weighted_t_test_ctrs': ('Weighted t-test, user CTR', colors[6], 'dotted'),
-    'weighted_sqr_bootstrap': ('Weighted sqr bootstrap, global CTR', colors[3], 'dashdot'),
-    'weighted_sqr_linearization': ('Weighted sqr linearization, global CTR', colors[4], 'dashdot'),
-    'weighted_sqr_buckets': ('Weighted sqr bucketization, global CTR', colors[5], 'dashdot'),
-    'weighted_sqr_t_test_ctrs': ('Weighted sqr t-test, user CTR', colors[6], 'dashdot'),
-    'ttest_smoothed': ('T-test smoothed user CTR', colors[0], 'dashdot')
+    'ttest_successes_count': ('T-test, clicks', colors[0]),
+    'mannwhitney_successes_count': ('Mann-Whitney test, clicks', colors[1]),
+    'delta': ('Delta-method, global CTR', colors[2]),
+    'bootstrap': ('Bootstrap, global CTR', colors[3]),
+    'linearization': ('Linearization, clicks', colors[4]),
+    'buckets_ctrs': ('Bucketization, global CTR', colors[5]),
+    't_test_ctrs': ('T-test, user CTR', colors[6]),
+    'weighted_bootstrap': ('Weighted bootstrap, global CTR', colors[7]),
+    'weighted_linearization': ('Weighted linearization, global CTR', colors[4]),
+    'weighted_buckets': ('Weighted bucketization, global CTR', colors[5]),
+    'weighted_t_test_ctrs': ('Weighted t-test, user CTR', colors[6]),
+    'weighted_sqr_bootstrap': ('Weighted sqr bootstrap, global CTR', colors[3]),
+    'weighted_sqr_linearization': ('Weighted sqr linearization, global CTR', colors[4]),
+    'weighted_sqr_buckets': ('Weighted sqr bucketization, global CTR', colors[5]),
+    'weighted_sqr_t_test_ctrs': ('Weighted sqr t-test, user CTR', colors[6]),
+    'ttest_smoothed': ('T-test smoothed user CTR', colors[0]),
+    'binomial_test': ('Binomial z-test', colors[7]),
 }
 
 cdf_h1_title = 'Simulated p-value CDFs under H1 (Sensitivity)'
@@ -44,7 +46,7 @@ def save_gif_and_show(path: str, frames: List[np.ndarray]):
     return HTML(f'<img src="{path}" width="1000px">')
 
 
-def plot_cdf(data, label, ax, color=colors[0], linestyle='solid'):
+def plot_cdf(data: np.ndarray, label: str, ax: Axes, color: str = colors[0], linewidth: float = 3):
     sorted_data = np.sort(data)
     position = scipy.stats.rankdata(sorted_data, method='ordinal')
     cdf = position / data.shape[0]
@@ -52,78 +54,73 @@ def plot_cdf(data, label, ax, color=colors[0], linestyle='solid'):
     sorted_data = np.hstack((sorted_data, 1))
     cdf = np.hstack((cdf, 1))
 
-    return ax.plot(sorted_data, cdf, color=color, linestyle=linestyle, label=label, linewidth=1.5)
+    return ax.plot(sorted_data, cdf, color=color, linestyle='solid', label=label, linewidth=linewidth)
 
 
-def plot_summary(dict2plot: Dict[str, Tuple[np.ndarray, np.ndarray, str, str]],
+def plot_summary(dict2plot: Dict[str, Tuple[np.ndarray, np.ndarray, str]],
                  attempts_0: np.ndarray,
-                 ground_truth_success_rates: np.ndarray,
-                 plot_params: Optional[Dict] = None):
-    default_params = {'fix_axis': True, 'dpi': 100}
-    plot_params = plot_params or {}
+                 ground_truth_success_rates: np.ndarray):
+    fig = plt.figure(constrained_layout=False, figsize=(4 * 3, 3 * 3), dpi=100)
+    gs = fig.add_gridspec(3, 3)
+    ax_h1 = fig.add_subplot(gs[:2, :2])
+    ax_h0 = fig.add_subplot(gs[0, 2])
+    ax_attempts = fig.add_subplot(gs[1, 2])
+    ax_successes = fig.add_subplot(gs[2, 2])
+    ax_powers = fig.add_subplot(gs[2, :2])
 
-    for k, v in default_params.items():
-        if k not in plot_params:
-            plot_params[k] = v
-
-    fig, ((ax_h1, ax_legend, ax_h0), (ax_powers, ax_attempts, ax_successes)) = plt.subplots(2, 3, figsize=(20, 10),
-                                                                                            dpi=plot_params['dpi'])
-
-    fig.subplots_adjust(wspace=0.2, hspace=0.3)
+    fig.subplots_adjust(left=0.2, wspace=0.3, hspace=0.4)
 
     ax_h1.plot(np.linspace(0, 1, 10000), np.linspace(0, 1, 10000), 'k', alpha=0.1)
     ax_h0.plot(np.linspace(0, 1, 10000), np.linspace(0, 1, 10000), 'k', alpha=0.1)
 
-    ax_h1.set_xlabel('p-value')
-    ax_h0.set_xlabel('p-value')
+    # ax_h1.set_xlabel('p-value')
+    # ax_h0.set_xlabel('p-value')
     ax_h1.set_title(cdf_h1_title)
     ax_h0.set_title(cdf_h0_title)
 
-    ax_h1.set_ylabel('Sensitivity')
-    ax_h0.set_ylabel('FPR')
+    # ax_h1.set_ylabel('Sensitivity')
+    # ax_h0.set_ylabel('FPR')
 
     ax_h1.axvline(0.05, color='k', alpha=0.5)
+    # ax_h1.set_xticks(list(ax_h1.get_xticks()) + [0.05])
 
-    lines = []
-
-    for title, (ab_pvals, aa_pvals, color, linestyle) in dict2plot.items():
-        line, = plot_cdf(ab_pvals, title, ax_h1, color, linestyle)
-        plot_cdf(aa_pvals, title, ax_h0, color, linestyle)
-        lines.append(line)
-    ax_legend.legend(handles=lines, loc='center')
-    ax_legend.axis('off')
+    for title, (ab_pvals, aa_pvals, color) in dict2plot.items():
+        plot_cdf(ab_pvals, title, ax_h1, color, linewidth=3)
+        plot_cdf(aa_pvals, title, ax_h0, color, linewidth=1.5)
 
     ax_powers.set_title('Test Power')
     tests_powers = []
     tests_labels = []
     tests_colours = []
-    for title, (ab_pvals, _, color, linestyle) in dict2plot.items():
+    for title, (ab_pvals, _, color) in dict2plot.items():
         tests_labels.append(title)
         tests_colours.append(color)
         tests_powers.append(np.mean(ab_pvals < 0.05))
     ax_powers.barh(np.array(tests_labels), np.array(tests_powers), color=np.array(tests_colours))
 
-    # ax_attempts.hist(attempts_0[:10].flatten(), 100, (0, 100), density=True)
-    sns.distplot(attempts_0.flatten(), bins=range(0, 40), ax=ax_attempts,
-                 kde=False, norm_hist=True)
-    ax_attempts.set_xlim((0, 40))
-    attempts_std = np.std(attempts_0[:10].flatten())
-    ax_attempts.set_title('Views distribution, std = {:<20.0f}'.format(attempts_std))
-
-    # ax_successes.hist(ground_truth_success_rates[:10].flatten(), 100, (0, 0.5), density=True)
-    sns.distplot(ground_truth_success_rates.ravel(), bins=np.linspace(0, 0.2, 100), ax=ax_successes, kde=False,
+    sns.distplot(attempts_0.ravel(),
+                 bins=range(0, 20),
+                 ax=ax_attempts,
+                 kde=False,
                  norm_hist=True)
-    ax_successes.set_xlim((0, 0.2))
+    ax_attempts.set_xlim((0, 20))
+    attempts_std = np.percentile(attempts_0.ravel(), 99)
+    ax_attempts.set_title(f'Views, 99%-ile = {attempts_std:<7.1f}')
 
+    sns.distplot(ground_truth_success_rates.ravel(),
+                 bins=np.linspace(0, 0.2, 100),
+                 ax=ax_successes,
+                 kde=False,
+                 norm_hist=True)
+    ax_successes.set_xlim((0, 0.1))
     success_rate_std = ground_truth_success_rates[:10].flatten().std()
-    ax_successes.set_title('Ground truth user CTR distribution, std = {:2.3f}'.format(success_rate_std))
+    ax_successes.set_title(f'Ground truth user CTR, std = {success_rate_std:2.3f}')
     return fig
 
 
 def plot_from_params(data_dir: str,
                      params: Dict,
-                     codenames: Optional[Set[str]] = None,
-                     plot_params: Optional[Dict] = None):
+                     codenames: Optional[Set[str]] = None):
     gen_params = dict(params)
     gen_params['NN'] = 10
     (attempts_0, _), _, ground_truth_success_rates = generate_data(**gen_params)
@@ -137,19 +134,18 @@ def plot_from_params(data_dir: str,
         required_codenames2titles.update(codenames2titles)
 
     dict2plot = {}
-    for codename, (title, color, linestyle) in required_codenames2titles.items():
+    for codename, (title, color) in required_codenames2titles.items():
         ab_data, aa_data = rpv(data_dir, codename, **params)
-        dict2plot[title] = (ab_data, aa_data, color, linestyle)
+        dict2plot[title] = (ab_data, aa_data, color)
 
-    fig = plot_summary(dict2plot, attempts_0, ground_truth_success_rates, plot_params)
+    fig = plot_summary(dict2plot, attempts_0, ground_truth_success_rates)
     return fig
 
 
 def frame_from_params(data_dir: str,
                       param: Dict,
-                      codenames: Optional[Set[str]] = None,
-                      plot_params: Optional[Dict] = None):
-    fig = plot_from_params(data_dir, param, codenames, plot_params)
+                      codenames: Optional[Set[str]] = None):
+    fig = plot_from_params(data_dir, param, codenames)
     fig.canvas.draw()  # draw the canvas, cache the renderer
     image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
     image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))

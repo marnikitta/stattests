@@ -93,7 +93,7 @@ def buckets(ctrs_0, weights_0, ctrs_1, weights_1, n_buckets=200):
     return t_test(values_0, values_1)
 
 
-def proportions_diff_z_test(success_rate_0, attempts_0, success_rate_1, attempts_1):
+def binomial_test(success_rate_0, attempts_0, success_rate_1, attempts_1):
     """
     Calculates two-sided p-values for all the experiments on global CTRs using z-test
     :param success_rate_0: np.array shape (n_experiments), global ctr in control group in every experiment

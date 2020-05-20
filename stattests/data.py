@@ -5,7 +5,7 @@ import numpy as np
 
 from stattests.generation import generate_data
 from stattests.tests import t_test, mannwhitney, delta_method_ctrs, bootstrap, linearization_of_successes, buckets, \
-    intra_user_correlation_aware_weights, get_smoothed_ctrs
+    intra_user_correlation_aware_weights, get_smoothed_ctrs, binomial_test
 
 
 def wpv(data_dir: str,
@@ -94,7 +94,7 @@ def apply_all_tests(data_dir: str,
                         successes_1_aa / attempts_1_aa, np.ones(shape=attempts_1_aa.shape)), **ab_params)
 
     wpv(data_dir, 'buckets_ctrs', lambda: buckets(successes_0_ab / attempts_0_ab, attempts_0_ab,
-                                             successes_1_ab / attempts_1_ab, attempts_1_ab),
+                                                  successes_1_ab / attempts_1_ab, attempts_1_ab),
         lambda: buckets(successes_0_aa / attempts_0_aa, attempts_0_aa,
                         successes_1_aa / attempts_1_aa, attempts_0_aa), **ab_params)
 
@@ -171,4 +171,16 @@ def apply_all_tests(data_dir: str,
     wpv(data_dir, 'ttest_smoothed',
         lambda: t_test(smoothed_ctrs_0_ab, smoothed_ctrs_1_ab),
         lambda: t_test(smoothed_ctrs_0_aa, smoothed_ctrs_1_aa),
+        **ab_params)
+
+    global_ctr_0_ab = successes_0_ab.sum(axis=1) / attempts_0_ab.sum(axis=1)
+    global_ctr_1_ab = successes_1_ab.sum(axis=1) / attempts_1_ab.sum(axis=1)
+    global_ctr_0_aa = successes_0_aa.sum(axis=1) / attempts_0_aa.sum(axis=1)
+    global_ctr_1_aa = successes_1_aa.sum(axis=1) / attempts_1_aa.sum(axis=1)
+
+    wpv(data_dir, 'binomial_test',
+        lambda: binomial_test(global_ctr_0_ab, attempts_0_ab.sum(axis=1),
+                              global_ctr_1_ab, attempts_1_ab.sum(axis=1)),
+        lambda: binomial_test(global_ctr_0_aa, attempts_0_aa.sum(axis=1),
+                              global_ctr_1_aa, attempts_1_aa.sum(axis=1)),
         **ab_params)
