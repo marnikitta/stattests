@@ -58,14 +58,14 @@ def plot_cdf(data: np.ndarray, label: str, ax: Axes, color: str = colors[0], lin
 
 
 def plot_summary(dict2plot: Dict[str, Tuple[np.ndarray, np.ndarray, str]],
-                 attempts_0: np.ndarray,
+                 views_0: np.ndarray,
                  ground_truth_success_rates: np.ndarray):
     fig = plt.figure(constrained_layout=False, figsize=(4 * 3, 3 * 3), dpi=100)
     gs = fig.add_gridspec(3, 3)
     ax_h1 = fig.add_subplot(gs[:2, :2])
     ax_h0 = fig.add_subplot(gs[0, 2])
-    ax_attempts = fig.add_subplot(gs[1, 2])
-    ax_successes = fig.add_subplot(gs[2, 2])
+    ax_views = fig.add_subplot(gs[1, 2])
+    ax_clicks = fig.add_subplot(gs[2, 2])
     ax_powers = fig.add_subplot(gs[2, :2])
 
     fig.subplots_adjust(left=0.2, wspace=0.3, hspace=0.4)
@@ -98,23 +98,23 @@ def plot_summary(dict2plot: Dict[str, Tuple[np.ndarray, np.ndarray, str]],
         tests_powers.append(np.mean(ab_pvals < 0.05))
     ax_powers.barh(np.array(tests_labels), np.array(tests_powers), color=np.array(tests_colours))
 
-    sns.distplot(attempts_0.ravel(),
+    sns.distplot(views_0.ravel(),
                  bins=range(0, 20),
-                 ax=ax_attempts,
+                 ax=ax_views,
                  kde=False,
                  norm_hist=True)
-    ax_attempts.set_xlim((0, 20))
-    attempts_std = np.percentile(attempts_0.ravel(), 99)
-    ax_attempts.set_title(f'Views, 99%-ile = {attempts_std:<7.1f}')
+    ax_views.set_xlim((0, 20))
+    views_99_percentile = np.percentile(views_0.ravel(), 99)
+    ax_views.set_title(f'Views, 99%-ile = {views_99_percentile:<7.1f}')
 
     sns.distplot(ground_truth_success_rates.ravel(),
                  bins=np.linspace(0, 0.2, 100),
-                 ax=ax_successes,
+                 ax=ax_clicks,
                  kde=False,
                  norm_hist=True)
-    ax_successes.set_xlim((0, 0.1))
+    ax_clicks.set_xlim((0, 0.1))
     success_rate_std = ground_truth_success_rates[:10].flatten().std()
-    ax_successes.set_title(f'Ground truth user CTR, std = {success_rate_std:2.3f}')
+    ax_clicks.set_title(f'Ground truth user CTR, std = {success_rate_std:2.3f}')
     return fig
 
 
@@ -123,7 +123,7 @@ def plot_from_params(data_dir: str,
                      codenames: Optional[Set[str]] = None):
     gen_params = dict(params)
     gen_params['NN'] = 10
-    (attempts_0, _), _, ground_truth_success_rates = generate_data(**gen_params)
+    (views_0, _), _, ground_truth_success_rates = generate_data(**gen_params)
 
     required_codenames2titles = {}
     if codenames is not None:
@@ -138,7 +138,7 @@ def plot_from_params(data_dir: str,
         ab_data, aa_data = rpv(data_dir, codename, **params)
         dict2plot[title] = (ab_data, aa_data, color)
 
-    fig = plot_summary(dict2plot, attempts_0, ground_truth_success_rates)
+    fig = plot_summary(dict2plot, views_0, ground_truth_success_rates)
     return fig
 
 
