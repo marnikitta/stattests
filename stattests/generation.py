@@ -19,15 +19,11 @@ def generate_data(skew: float = 2.0,
     :param success_rate: float, mean success rate in control group
     :param uplift: float, relative uplift of mean success rate in treatment group
     :param beta: float, parameter of success rate distribution
-    :param max_attempts_per_user: int, maximal number of attempts per user. Attempts per user will be truncated to this number
-    :return: (np.array, np.array, np.array, np.array, np.array) shape (NN, N), attempts in control group, 
+    :return: (np.array, np.array, np.array, np.array, np.array) shape (NN, N), attempts in control group,
     successes in control group, attempts in treatment group, successes in treatment group, ground-truth success_rates for control group
     """
     attempts_0 = np.exp(scipy.stats.norm(1, skew).rvs(NN * N)).astype(np.int).reshape(NN, N) + 1
     attempts_1 = np.exp(scipy.stats.norm(1, skew).rvs(NN * N)).astype(np.int).reshape(NN, N) + 1
-
-    #     attempts_0[attempts_0 > max_attempts_per_user] = max_attempts_per_user
-    #     attempts_1[attempts_1 > max_attempts_per_user] = max_attempts_per_user
 
     # attempts is always positive, abs is fixing numerical issues with high skewness
     attempts_0 = np.absolute(attempts_0)
