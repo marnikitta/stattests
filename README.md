@@ -1,6 +1,6 @@
 # Practitioner's Guide to Statistical Tests
 
-Source code to reproduce experiments from the article [Practitioner’s Guide to Statistical Tests](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+Source code to reproduce experiments from the article [Practitioner’s Guide to Statistical Tests](https://medium.com/@vktech/practitioners-guide-to-statistical-tests-ed2d580ef04f)
 
 <img src="./compressed_gifs/preview.gif" title="preview"/>
 
@@ -14,7 +14,7 @@ NN = 2000 # Number of runs
 beta = 1000
 skew = 1
 ```
-Read the article for the details.
+Read the [article](https://medium.com/@vktech/practitioners-guide-to-statistical-tests-ed2d580ef04f) for the details.
 
 To reproduce gifs and plots from the article use [assets.ipynb](./notebooks/assests.ipynb) notebook.
 
