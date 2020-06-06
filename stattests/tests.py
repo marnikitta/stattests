@@ -178,3 +178,40 @@ def linearization_of_clicks(clicks_0, views_0, clicks_1, views_1):
     L_0 = clicks_0 - k * views_0
     L_1 = clicks_1 - k * views_1
     return L_0, L_1
+
+
+def permutation_test(clicks_0: np.ndarray,
+                     views_0: np.ndarray,
+                     clicks_1: np.ndarray,
+                     views_1: np.ndarray,
+                     samples: int = 2000) -> np.ndarray:
+    n_experiments = views_0.shape[0]
+    n_users_0 = views_0.shape[1]
+    n_users_1 = views_1.shape[1]
+
+    permutations = np.zeros((samples, n_users_0 + n_users_1)).astype(np.int32)
+    permutation = np.arange(n_users_0 + n_users_1)
+    for i in range(samples):
+        np.random.shuffle(permutation)
+        permutations[i] = permutation.copy()
+    permutation_flags = (permutations < n_users_0).astype(np.int32)
+
+    concated_views = np.hstack((views_0, views_1))
+    concated_clicks = np.hstack((clicks_0, clicks_1))
+
+    clicks_sum_0 = np.matmul(concated_clicks, permutation_flags.T)
+    clicks_sum_1 = np.matmul(concated_clicks, 1 - permutation_flags.T)
+
+    views_sum_0 = np.matmul(concated_views, permutation_flags.T)
+    views_sum_1 = np.matmul(concated_views, 1 - permutation_flags.T)
+
+    null_stats = clicks_sum_1 / views_sum_1 - clicks_sum_0 / views_sum_0
+    null_stats = np.sort(null_stats)
+    p_values = np.zeros(n_experiments)
+
+    for i in range(n_experiments):
+        exp_stat = clicks_1[i].sum() / views_1[i].sum() - clicks_0[i].sum() / views_0[i].sum()
+        insert_position = np.searchsorted(null_stats[i], exp_stat)
+        p_values[i] = 2 * np.minimum(samples - insert_position, insert_position) / samples
+
+    return p_values

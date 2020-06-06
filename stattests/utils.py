@@ -18,6 +18,7 @@ codenames2titles = {
     'mannwhitney_successes_count': ('Mann-Whitney test, clicks', colors[1]),
     'delta': ('Delta-method, global CTR', colors[2]),
     'bootstrap': ('Bootstrap, global CTR', colors[3]),
+    'permutation_test': ('Permutation, global CTR', colors[8]),
     'linearization': ('Linearization, clicks', colors[4]),
     'buckets_ctrs': ('Bucketization, global CTR', colors[5]),
     't_test_ctrs': ('T-test, user CTR', colors[6]),

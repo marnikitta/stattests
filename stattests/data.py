@@ -5,7 +5,7 @@ import numpy as np
 
 from stattests.generation import generate_data
 from stattests.tests import t_test, mannwhitney, delta_method_ctrs, bootstrap, linearization_of_clicks, bucketization, \
-    intra_user_correlation_aware_weights, get_smoothed_ctrs, binomial_test
+    intra_user_correlation_aware_weights, get_smoothed_ctrs, binomial_test, permutation_test
 
 
 def wpv(data_dir: str,
@@ -183,4 +183,9 @@ def apply_all_tests(data_dir: str,
                               global_ctr_1_ab, views_1_ab.sum(axis=1)),
         lambda: binomial_test(global_ctr_0_aa, views_0_aa.sum(axis=1),
                               global_ctr_1_aa, views_1_aa.sum(axis=1)),
+        **ab_params)
+
+    wpv(data_dir, 'permutation_test',
+        lambda: permutation_test(clicks_0_ab, views_0_ab, clicks_1_ab, views_1_ab),
+        lambda: permutation_test(clicks_0_aa, views_0_aa, clicks_1_aa, views_1_aa),
         **ab_params)
