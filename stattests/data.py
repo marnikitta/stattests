@@ -101,6 +101,9 @@ def apply_all_tests(data_dir: str,
     wpv(data_dir, 't_test_ctrs', lambda: t_test(clicks_0_ab / views_0_ab, clicks_1_ab / views_1_ab),
         lambda: t_test(clicks_0_aa / views_0_aa, clicks_1_aa / views_1_aa), **ab_params)
 
+    wpv(data_dir, 'mw_ctrs', lambda: mannwhitney(clicks_0_ab / views_0_ab, clicks_1_ab / views_1_ab),
+        lambda: mannwhitney(clicks_0_aa / views_0_aa, clicks_1_aa / views_1_aa), **ab_params)
+
     corr_aware_w_0_ab, corr_aware_w_1_ab = intra_user_correlation_aware_weights(clicks_0_ab, views_0_ab,
                                                                                 views_1_ab)
     corr_aware_w_0_aa, corr_aware_w_1_aa = intra_user_correlation_aware_weights(clicks_0_aa, views_0_aa,
@@ -171,6 +174,11 @@ def apply_all_tests(data_dir: str,
     wpv(data_dir, 'ttest_smoothed',
         lambda: t_test(smoothed_ctrs_0_ab, smoothed_ctrs_1_ab),
         lambda: t_test(smoothed_ctrs_0_aa, smoothed_ctrs_1_aa),
+        **ab_params)
+
+    wpv(data_dir, 'mw_smoothed',
+        lambda: mannwhitney(smoothed_ctrs_0_ab, smoothed_ctrs_1_ab),
+        lambda: mannwhitney(smoothed_ctrs_0_aa, smoothed_ctrs_1_aa),
         **ab_params)
 
     global_ctr_0_ab = clicks_0_ab.sum(axis=1) / views_0_ab.sum(axis=1)

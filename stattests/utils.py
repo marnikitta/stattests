@@ -22,6 +22,7 @@ codenames2titles = {
     'linearization': ('Linearization, clicks', colors[4]),
     'buckets_ctrs': ('Bucketization, global CTR', colors[5]),
     't_test_ctrs': ('T-test, user CTR', colors[6]),
+    'mw_ctrs': ('MW, user CTR', colors[7]),
     'weighted_bootstrap': ('Weighted bootstrap, global CTR', colors[7]),
     'weighted_linearization': ('Weighted linearization, global CTR', colors[4]),
     'weighted_buckets': ('Weighted bucketization, global CTR', colors[5]),
@@ -30,7 +31,8 @@ codenames2titles = {
     'weighted_sqr_linearization': ('Weighted sqr linearization, global CTR', colors[4]),
     'weighted_sqr_buckets': ('Weighted sqr bucketization, global CTR', colors[5]),
     'weighted_sqr_t_test_ctrs': ('Weighted sqr t-test, user CTR', colors[6]),
-    'ttest_smoothed': ('T-test smoothed user CTR', colors[0]),
+    'ttest_smoothed': ('T-test, smoothed user CTR', colors[0]),
+    'mw_smoothed': ('MW, smoothed user CTR', colors[1]),
     'binomial_test': ('Binomial z-test', colors[7]),
 }
 
