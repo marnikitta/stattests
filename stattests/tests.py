@@ -61,7 +61,7 @@ def bootstrap(ctrs_0, weights_0, ctrs_1, weights_1, n_bootstrap=2000):
 
     deltas = values_1 / weights_1 - values_0 / weights_0
 
-    positions = np.apply_along_axis(lambda x: sum(x < 0), arr=deltas, axis=1)
+    positions = np.sum(deltas < 0, axis=1)
 
     return 2 * np.minimum(positions, n_bootstrap - positions) / n_bootstrap
 
