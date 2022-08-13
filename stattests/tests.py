@@ -171,7 +171,7 @@ def linearization_of_clicks(clicks_0, views_0, clicks_1, views_1):
     :param views_1: np.array shape (n_experiments, n_users), views of every user from treatment group in every experiment
     :return: (np.array, np_array) shape (n_experiments), linearized clicks for every user in every experiment
     """
-    k = clicks_0.flatten().sum() / views_0.flatten().sum()
+    k = (clicks_0.sum(axis=1) / views_0.sum(axis=1)).reshape(-1, 1)
     L_0 = clicks_0 - k * views_0
     L_1 = clicks_1 - k * views_1
     return L_0, L_1
